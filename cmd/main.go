@@ -6,35 +6,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"runtime/pprof"
-	"time"
+	"strings"
 
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
-	"github.com/dialogbox/mpipego/converters"
-	"github.com/dialogbox/mpipego/outputs"
+	"github.com/dialogbox/mpipego"
 )
-
-func benchmarker(signal chan int) {
-	prev := time.Now()
-	acc := 0
-
-	for {
-		count := <-signal
-
-		if count < 0 {
-			break
-		}
-
-		elapsed := time.Since(prev)
-		prev = time.Now()
-
-		fmt.Printf("%d in %s, total %d\n", count-acc, elapsed, count)
-		acc = count
-	}
-}
-
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func kafkaConsumer(conf *cluster.Config, brokers []string, group string, topics []string) *cluster.Consumer {
 	consumer, err := cluster.NewConsumer(brokers, group, topics, conf)
@@ -47,43 +24,47 @@ func kafkaConsumer(conf *cluster.Config, brokers []string, group string, topics 
 
 func main() {
 	flag.Parse()
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
+
+	brokersPtr := flag.String("brokers", "localhost:9092", "CSV initial broker list")
+	groupIDPtr := flag.String("groupid", "group01", "Group ID")
+	converterNamePtr := flag.String("converter", "telegraf_json", "Format converter name")
+	brokers := strings.Split(*brokersPtr, ",")
+
+	if len(brokers) == 0 {
+		os.Exit(1)
 	}
 
-	indexer := outputs.NewElasticIndexer()
-	indexer.Start()
-	defer indexer.Stop()
+	if flag.NArg() == 0 {
+		os.Exit(1)
+	}
+
+	topics := flag.Args()
+
+	// indexer := mpipego.NewElasticIndexer()
+	// indexer.Start()
+	// defer indexer.Stop()
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
-	stopwatch := make(chan int)
-	go benchmarker(stopwatch)
-
 	conf := cluster.NewConfig()
-	conf.Consumer.Offsets.Initial = sarama.OffsetNewest
+	conf.Consumer.Offsets.Initial = sarama.OffsetOldest
 	conf.Consumer.Fetch.Default = 1024 * 1024
 	conf.Consumer.Return.Errors = true
 	conf.Group.Return.Notifications = true
 
-	consumer := kafkaConsumer(conf, []string{"localhost:9092"}, "GOTestGroup01", []string{"test"})
+	consumer := kafkaConsumer(conf, brokers, *groupIDPtr, topics)
 	defer consumer.Close()
 
-	converter := converters.ConverterForType("telegraf_json")
+	converter := mpipego.ConverterForType(*converterNamePtr)
 
-	count := 0
 	for {
 		select {
 		case msg, more := <-consumer.Messages():
 			if more {
 				metricData := converter(msg.Value)
-				indexer.Index(metricData)
+				// indexer.Index(metricData)
+				fmt.Println(metricData.Data)
 
 				consumer.MarkOffset(msg, "") // mark message as processed
 			}
@@ -99,10 +80,6 @@ func main() {
 			return
 		}
 
-		count = count + 1
-		if count%10000 == 0 {
-			stopwatch <- count
-		}
 	}
 
 }

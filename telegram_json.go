@@ -1,4 +1,4 @@
-package converters
+package mpipego
 
 import (
 	"encoding/json"

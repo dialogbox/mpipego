@@ -1,14 +1,14 @@
 hash: 9011650d14707765eb7c822f5541b722e86be54514ee6d1a9e034caadd06ff09
-updated: 2017-06-01T23:40:59.873698556+09:00
+updated: 2017-08-18T11:08:50.892058099+09:00
 imports:
 - name: github.com/bsm/sarama-cluster
   version: ccdc0803695fbce22f1706d04ded46cd518fd832
 - name: github.com/davecgh/go-spew
-  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  version: adab96458c51a58dc1783b3335dcce5461522e75
   subpackages:
   - spew
 - name: github.com/eapache/go-resiliency
-  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  version: b1fe83b5b03f624450823b751b662259ffc6af70
   subpackages:
   - breaker
 - name: github.com/eapache/go-xerial-snappy
@@ -20,7 +20,7 @@ imports:
 - name: github.com/pierrec/lz4
   version: 5a3d2245f97fc249850e7802e3c01fad02a1c316
 - name: github.com/pierrec/xxHash
-  version: 5a004441f897722c627870a981d02b29924215fa
+  version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
   subpackages:
   - xxHash32
 - name: github.com/pkg/errors
@@ -30,11 +30,12 @@ imports:
 - name: github.com/Shopify/sarama
   version: c01858abb625b73a3af51d0798e4ad42c8147093
 - name: golang.org/x/net
-  version: 3da985ce5951d99de868be4385f21ea6c2b22f24
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
   - context
 - name: gopkg.in/olivere/elastic.v5
-  version: f1fd7305d0b6270192b27010fe1193568b18e4b6
+  version: edbef41beaacc2ee95e61af8faff04e67c01e268
   subpackages:
+  - config
   - uritemplates
 testImports: []

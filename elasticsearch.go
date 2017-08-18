@@ -1,11 +1,11 @@
-package outputs
+package mpipego
 
 import (
-	"github.com/dialogbox/mpipego/converters"
-	"gopkg.in/olivere/elastic.v5"
-	"golang.org/x/net/context"
-	"time"
 	"fmt"
+	"time"
+
+	"golang.org/x/net/context"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 type ElasticIndexer struct {
@@ -20,8 +20,8 @@ type ElasticIndexer struct {
 
 	BufferSize int
 	processor  *elastic.BulkProcessor
-	input      chan *converters.MetricData
-	quit chan int
+	input      chan *MetricData
+	quit       chan int
 }
 
 func NewElasticIndexer() *ElasticIndexer {
@@ -41,7 +41,7 @@ func NewElasticIndexer() *ElasticIndexer {
 	return &e
 }
 
-func (es *ElasticIndexer) Index(m *converters.MetricData) {
+func (es *ElasticIndexer) Index(m *MetricData) {
 	es.input <- m
 }
 
@@ -63,13 +63,13 @@ func (es *ElasticIndexer) Start() {
 		panic(err)
 	}
 
-	es.input = make(chan *converters.MetricData, es.BufferSize)
+	es.input = make(chan *MetricData, es.BufferSize)
 
 	go func() {
 		for {
 			select {
 			case m := <-es.input:
-				indexName := fmt.Sprint("%s-%s", es.IndexPrefix, m.Timestamp.Format("2006.01.02"))
+				indexName := fmt.Sprintf("%s-%s", es.IndexPrefix, m.Timestamp.Format("2006.01.02"))
 				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.Template).Doc(m.Data)
 				es.processor.Add(r)
 			case <-es.quit:
