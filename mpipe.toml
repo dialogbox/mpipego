@@ -1,0 +1,21 @@
+[kafka]
+brokers = [ "localhost:9092", "localhost:9093" ]
+groupid = "group01"
+topics = [ "test" ]
+format = "telegraf_json"
+
+[[filters]]
+name = "blacklist_filter"
+configfile = "blacklist_filter.conf"
+enabled = false
+
+[[filters]]
+name = "whitelist_filter"
+configfile = "whitelist_filter.conf"
+enabled = false
+
+
+[elasticsearch]
+url = "elasticsearch://localhost:9300?cluster.name=my-application"
+template = "telegraf_json"
+prefix = "metricpipe"
