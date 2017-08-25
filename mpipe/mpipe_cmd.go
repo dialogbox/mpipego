@@ -17,13 +17,13 @@ import (
 var cfgFile string
 var verbose bool
 
-type mpipConfig struct {
+type mpipeConfig struct {
 	kafkaConfig
 	esConfig
 	test bool
 }
 
-var config mpipConfig
+var config mpipeConfig
 
 var mpipeCmd = &cobra.Command{
 	Use:   "mpipe",
@@ -44,7 +44,7 @@ func Execute() {
 	}
 }
 
-func runpipe(config *mpipConfig) {
+func runpipe(config *mpipeConfig) {
 	if len(config.kafkaConfig.brokers) == 0 {
 		logrus.Fatal("No broker is provided")
 		os.Exit(1)

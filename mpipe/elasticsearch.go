@@ -68,6 +68,7 @@ func (es *elasticIndexer) start(ctx context.Context) {
 
 	es.input = make(chan *MetricData, es.bufferSize)
 
+	// forwarder goroutine
 	go func() {
 		for {
 			select {
