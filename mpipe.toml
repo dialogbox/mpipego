@@ -1,21 +1,25 @@
 [kafka]
-brokers = [ "localhost:9092", "localhost:9093" ]
-groupid = "group01"
-topics = [ "test" ]
-format = "telegraf_json"
+# brokers = [ "localhost:9092" ]
+# groupid = "group01"
+# topics = [ "test" ]
+# format = "telegraf_json"
 
-[[filters]]
-name = "blacklist_filter"
-configfile = "blacklist_filter.conf"
-enabled = false
+# [[filters]] // Not yet implemented
+# name = "blacklist_filter"
+# configfile = "blacklist_filter.conf"
+# enabled = false
 
-[[filters]]
-name = "whitelist_filter"
-configfile = "whitelist_filter.conf"
-enabled = false
-
+# [[filters]]
+# name = "whitelist_filter"
+# configfile = "whitelist_filter.conf"
+# enabled = false
 
 [elasticsearch]
-url = "elasticsearch://localhost:9300?cluster.name=my-application"
-template = "telegraf_json"
-prefix = "metricpipe"
+# url = "http://127.0.0.1:9200?cluster.name=my-application"
+# template = "telegraf_json"
+# prefix = "metricpipe"
+# batchSize = 500
+# flushInterval = "2s"
+# workers = 4
+# bufferSize = 1000
+# reportInterval = "60s"

@@ -54,6 +54,7 @@ func (m *MetricData) String() string {
 	return fmt.Sprintf("[%v] name: %s, meta: %v, keys: %v", m.Timestamp, name, tags, keys)
 }
 
+// NewConverter factory method
 func NewConverter(name string) (Converter, error) {
 	switch name {
 	case "telegraf_json":
