@@ -78,7 +78,8 @@ func runpipe(config *mpipeConfig) {
 	for {
 		select {
 		case <-ctx.Done():
-			go consumer.Close()
+			consumer.Close()
+			indexer.stop()
 			return
 		case msg, more := <-consumer.Messages():
 			if more {

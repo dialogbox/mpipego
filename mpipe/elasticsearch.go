@@ -2,6 +2,7 @@ package mpipe
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -26,6 +27,7 @@ type esConfig struct {
 type elasticIndexer struct {
 	esConfig
 
+	wg    sync.WaitGroup
 	input chan *MetricData
 }
 
@@ -68,15 +70,17 @@ func (es *elasticIndexer) start(ctx context.Context) {
 
 	es.input = make(chan *MetricData, es.bufferSize)
 
+	es.wg.Add(2)
+
 	// forwarder goroutine
 	go func() {
+		defer es.wg.Done()
 		for {
 			select {
 			case <-ctx.Done():
 				close(es.input)
-				go func() {
-					processor.Close()
-				}()
+				processor.Close()
+				logrus.Infoln("ES indexer has terminated")
 				return
 			case m := <-es.input:
 				indexName := fmt.Sprintf("%s-%s", es.prefix, m.Timestamp.Format("2006.01.02"))
@@ -88,6 +92,7 @@ func (es *elasticIndexer) start(ctx context.Context) {
 
 	// reporter goroutine
 	go func() {
+		defer es.wg.Done()
 		var prevStat elastic.BulkProcessorStats
 		for {
 			select {
@@ -100,6 +105,10 @@ func (es *elasticIndexer) start(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+func (es *elasticIndexer) stop() {
+	es.wg.Wait()
 }
 
 func reportStat(prev *elastic.BulkProcessorStats, stats *elastic.BulkProcessorStats) {

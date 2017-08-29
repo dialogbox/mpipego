@@ -24,7 +24,7 @@ func (c *telegrafJSONConverter) Convert(d []byte) (*MetricData, error) {
 	m["t"] = m["tags"]
 	m["m"] = map[string]interface{}{m["name"].(string): m["fields"]}
 	timestamp := time.Unix(int64(m["timestamp"].(float64)), 0)
-	m["@ts"] = timestamp.Format(time.RFC3339)
+	m["@timestamp"] = timestamp.Format(time.RFC3339)
 
 	delete(m, "tags")
 	delete(m, "fields")
