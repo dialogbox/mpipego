@@ -12,25 +12,39 @@ func (c *telegrafJSONConverter) Name() string {
 	return "telegraf_json"
 }
 
+type oldMetric struct {
+	Timestamp int64            `json:"timestamp"`
+	Name      string           `json:"name"`
+	Tags      *json.RawMessage `json:"tags"`
+	Fields    *json.RawMessage `json:"fields"`
+}
+
+type metricDataJSONPayload struct {
+	Timestamp string                      `json:"@timestamp"`
+	Tags      *json.RawMessage            `json:"t"`
+	Fields    map[string]*json.RawMessage `json:"m"`
+}
+
 // ConvertTelegrafJSON Convert telegram generated JSON
 func (c *telegrafJSONConverter) Convert(d []byte) (*MetricData, error) {
-	var f interface{}
-	if err := json.Unmarshal(d, &f); err != nil {
+	var olddata oldMetric
+	if err := json.Unmarshal(d, &olddata); err != nil {
 		return nil, err
 	}
 
-	m := f.(map[string]interface{})
+	timestamp := time.Unix(olddata.Timestamp, 0)
+	newdata := &metricDataJSONPayload{
+		timestamp.Format(time.RFC3339), // @timestamp
+		olddata.Tags,                   // t
+		map[string]*json.RawMessage{olddata.Name: olddata.Fields}, //m
+	}
 
-	m["t"] = m["tags"]
-	m["m"] = map[string]interface{}{m["name"].(string): m["fields"]}
-	timestamp := time.Unix(int64(m["timestamp"].(float64)), 0)
-	m["@timestamp"] = timestamp.Format(time.RFC3339)
+	result := &MetricData{
+		timestamp,
+		newdata,
+	}
 
-	delete(m, "tags")
-	delete(m, "fields")
-	delete(m, "timestamp")
-
-	return &MetricData{timestamp, m}, nil
+	return result, nil
 }
 
 func (c *telegrafJSONConverter) SetConfig(config map[string]interface{}) error {
