@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/dialogbox/mpipego/mpipe/converters"
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
@@ -70,7 +71,7 @@ func runpipe(config *mpipeConfig) {
 	}
 
 	consumer := kafkaConsumer(&config.kafkaConfig)
-	converter, err := NewConverter(config.format)
+	converter, err := converters.New(config.format)
 	if err != nil {
 		logrus.Fatalln(err)
 	}

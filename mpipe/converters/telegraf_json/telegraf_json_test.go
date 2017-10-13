@@ -1,8 +1,8 @@
-package mpipe
+package telegraf_json
 
-import "testing"
-
-import "encoding/json"
+import (
+	"testing"
+)
 
 var data = []string{
 	`{"fields":{"avg_ttl":0,"expires":0,"keys":1},"name":"redis_keyspace","tags":{"database":"db0","host":"Ameba01gm","port":"6381","replication_role":"master","server":"localhost"},"timestamp":1492650430}`,
@@ -23,10 +23,7 @@ var expectedResult = []string{
 }
 
 func TestTelegrafJSONConverter(t *testing.T) {
-	converter, err := NewConverter("telegraf_json")
-	if err != nil {
-		t.Error(err)
-	}
+	converter := NewConverter()
 
 	for i := range data {
 		m, err := converter.Convert([]byte(data[i]))
@@ -35,8 +32,7 @@ func TestTelegrafJSONConverter(t *testing.T) {
 			continue
 		}
 
-		jsondata, _ := json.Marshal(m.Data)
-
+		jsondata := m.JSON()
 		if string(jsondata) != expectedResult[i] {
 			t.Logf("Expected:\n%s\nGot:\n%s", expectedResult[i], string(jsondata))
 

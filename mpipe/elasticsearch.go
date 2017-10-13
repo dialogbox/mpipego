@@ -10,6 +10,11 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+type indexable interface {
+	Timestamp() time.Time
+	JSON() []byte
+}
+
 type esConfig struct {
 	url      string
 	template string
@@ -28,10 +33,10 @@ type elasticIndexer struct {
 	esConfig
 
 	wg    sync.WaitGroup
-	input chan *MetricData
+	input chan indexable
 }
 
-func (es *elasticIndexer) index(m *MetricData) {
+func (es *elasticIndexer) index(m indexable) {
 	es.input <- m
 }
 
@@ -68,7 +73,7 @@ func (es *elasticIndexer) start(ctx context.Context) {
 		panic(err)
 	}
 
-	es.input = make(chan *MetricData, es.bufferSize)
+	es.input = make(chan indexable, es.bufferSize)
 
 	es.wg.Add(2)
 
@@ -83,8 +88,8 @@ func (es *elasticIndexer) start(ctx context.Context) {
 				logrus.Infoln("ES indexer has terminated")
 				return
 			case m := <-es.input:
-				indexName := fmt.Sprintf("%s-%s", es.prefix, m.Timestamp.Format("2006.01.02"))
-				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.template).Doc(m.Data)
+				indexName := fmt.Sprintf("%s-%s", es.prefix, m.Timestamp().Format("2006.01.02"))
+				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.template).Doc(m.JSON())
 				processor.Add(r)
 			}
 		}
