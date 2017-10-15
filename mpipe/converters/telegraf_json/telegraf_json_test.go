@@ -35,7 +35,26 @@ func TestTelegrafJSONConverter(t *testing.T) {
 		jsondata := m.JSON()
 		if string(jsondata) != expectedResult[i] {
 			t.Logf("Expected:\n%s\nGot:\n%s", expectedResult[i], string(jsondata))
+		}
+	}
+}
 
+func BenchmarkTelegrafJSONConverter(b *testing.B) {
+	b.ReportAllocs()
+	converter := NewConverter()
+
+	for i := 0; i < b.N; i++ {
+		for i := range data {
+			m, err := converter.Convert([]byte(data[i]))
+			if err != nil {
+				b.Error(err)
+				continue
+			}
+
+			jsondata := m.JSON()
+			if string(jsondata) != expectedResult[i] {
+				b.Logf("Expected:\n%s\nGot:\n%s", expectedResult[i], string(jsondata))
+			}
 		}
 	}
 }
