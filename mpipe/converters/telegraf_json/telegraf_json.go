@@ -2,7 +2,6 @@ package telegraf_json
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
 	"time"
 
@@ -61,10 +60,14 @@ func (conv) Convert(d []byte) (common.Metric, error) {
 		return nil, err
 	}
 
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	common.FastMarshal(buf, timestamp, name, tags, fields)
+
 	return &metric{
 		ts:       timestamp,
 		name:     name,
-		jsonData: fastMarshal(timestamp, name, tags, fields),
+		jsonData: buf.String(),
 	}, nil
 }
 
@@ -76,27 +79,4 @@ var bufPool = sync.Pool{
 	New: func() interface{} {
 		return new(bytes.Buffer)
 	},
-}
-
-// json.Marshal consumes too much heap space and it makes GC busy.
-// fastMarshal does ALMOST SAME JOB with much more effecient way (but could be less safe).
-func fastMarshal(ts time.Time, name string, tags []byte, fields []byte) string {
-	b := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(b)
-
-	b.Reset()
-
-	b.WriteString(fmt.Sprintf(`{"@timestamp":"%s","name":"%s"`,
-		ts.Format(time.RFC3339),
-		name,
-	))
-	b.WriteString(`,"t":`)
-	b.Write(tags)
-	b.WriteString(fmt.Sprintf(`,"m":{"%s":`, name))
-	b.Write(fields)
-	b.WriteString(`}}`)
-
-	result := b.String()
-
-	return result
 }
