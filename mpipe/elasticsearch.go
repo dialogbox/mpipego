@@ -1,6 +1,7 @@
 package mpipe
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -27,6 +28,9 @@ type esConfig struct {
 	bufferSize int
 
 	reportInterval time.Duration
+
+	throttleRatio     float64
+	throttleSleepTime time.Duration
 }
 
 type elasticIndexer struct {
@@ -34,6 +38,12 @@ type elasticIndexer struct {
 
 	wg    sync.WaitGroup
 	input chan indexable
+}
+
+func (es *elasticIndexer) throttle() {
+	if float64(len(es.input))/float64(cap(es.input)) >= es.esConfig.throttleRatio {
+		<-time.After(es.esConfig.throttleSleepTime)
+	}
 }
 
 func (es *elasticIndexer) index(m indexable) {
@@ -68,6 +78,7 @@ func (es *elasticIndexer) start(ctx context.Context) {
 		BulkActions(es.batchSize).
 		FlushInterval(es.flushInterval).
 		Stats(true).
+		After(bulkAfterCallback).
 		Do(ctx)
 	if err != nil {
 		panic(err)
@@ -135,5 +146,18 @@ func reportStat(prev *elastic.BulkProcessorStats, stats *elastic.BulkProcessorSt
 
 	for i, w := range stats.Workers {
 		logrus.Infof("[Worker %3d] # of reqs queued: %d, Last response time: %v", i, w.Queued, w.LastDuration)
+	}
+}
+
+func bulkAfterCallback(executionID int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	if response.Errors {
+		failedItems := response.Failed()
+		for i := range failedItems {
+			logrus.Error(json.Marshal(failedItems[i]))
+		}
 	}
 }

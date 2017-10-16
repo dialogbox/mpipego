@@ -84,6 +84,9 @@ func runpipe(config *mpipeConfig) {
 			return
 		case msg, more := <-consumer.Messages():
 			if more {
+				// Throttling
+				indexer.throttle()
+
 				go func() {
 					metricData, err := converter.Convert(msg.Value)
 					if err != nil {
@@ -137,8 +140,10 @@ func init() {
 	viper.SetDefault("elasticsearch.batchSize", 500)
 	viper.SetDefault("elasticsearch.flushInterval", 5*time.Second)
 	viper.SetDefault("elasticsearch.workers", 4)
-	viper.SetDefault("elasticsearch.bufferSize", 1000)
+	viper.SetDefault("elasticsearch.bufferSize", 2000)
 	viper.SetDefault("elasticsearch.reportInterval", time.Minute)
+	viper.SetDefault("elasticsearch.throttleRatio", 0.9)
+	viper.SetDefault("elasticsearch.throttleSleepTime", 50*time.Millisecond)
 }
 
 func initConfig() {
@@ -179,6 +184,9 @@ func initConfig() {
 	config.esConfig.workers = viper.GetInt("elasticsearch.workers")
 	config.esConfig.bufferSize = viper.GetInt("elasticsearch.bufferSize")
 	config.esConfig.reportInterval = viper.GetDuration("elasticsearch.reportInterval")
+
+	config.esConfig.throttleRatio = viper.GetFloat64("elasticsearch.throttleRatio")
+	config.esConfig.throttleSleepTime = viper.GetDuration("elasticsearch.throttleSleepTime")
 
 	logrus.Debugf("Processed config: %v\n", config)
 }
