@@ -82,6 +82,8 @@ var bufPool = sync.Pool{
 // fastMarshal does ALMOST SAME JOB with much more effecient way (but could be less safe).
 func fastMarshal(ts time.Time, name string, tags []byte, fields []byte) string {
 	b := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(b)
+
 	b.Reset()
 
 	b.WriteString(fmt.Sprintf(`{"@timestamp":"%s","name":"%s"`,
@@ -95,7 +97,6 @@ func fastMarshal(ts time.Time, name string, tags []byte, fields []byte) string {
 	b.WriteString(`}}`)
 
 	result := b.String()
-	bufPool.Put(b)
 
 	return result
 }
