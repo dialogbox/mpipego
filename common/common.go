@@ -10,6 +10,6 @@ type Converter interface {
 
 type Metric interface {
 	Timestamp() time.Time
-	Data() interface{}
-	JSON() []byte
+	Name() string
+	JSON() string
 }

@@ -12,7 +12,7 @@ import (
 
 type indexable interface {
 	Timestamp() time.Time
-	JSON() []byte
+	JSON() string
 }
 
 type esConfig struct {
@@ -89,7 +89,7 @@ func (es *elasticIndexer) start(ctx context.Context) {
 				return
 			case m := <-es.input:
 				indexName := fmt.Sprintf("%s-%s", es.prefix, m.Timestamp().Format("2006.01.02"))
-				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.template).Doc(string(m.JSON()))
+				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.template).Doc(m.JSON())
 				processor.Add(r)
 			}
 		}
