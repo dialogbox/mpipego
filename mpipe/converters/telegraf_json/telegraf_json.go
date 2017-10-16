@@ -2,10 +2,11 @@ package telegraf_json
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/buger/jsonparser"
 
 	"github.com/dialogbox/mpipego/common"
 )
@@ -40,23 +41,30 @@ func (conv) Name() string {
 
 // ConvertTelegrafJSON Convert telegram generated JSON
 func (conv) Convert(d []byte) (common.Metric, error) {
-	orgData := struct {
-		Timestamp int64           `json:"timestamp"`
-		Name      string          `json:"name"`
-		Tags      json.RawMessage `json:"tags"`
-		Fields    json.RawMessage `json:"fields"`
-	}{}
+	ts, err := jsonparser.GetInt(d, "timestamp")
+	if err != nil {
+		return nil, err
+	}
+	timestamp := time.Unix(ts, 0)
 
-	if err := json.Unmarshal(d, &orgData); err != nil {
+	name, err := jsonparser.GetString(d, "name")
+	if err != nil {
 		return nil, err
 	}
 
-	timestamp := time.Unix(orgData.Timestamp, 0)
+	tags, elemType, _, err := jsonparser.Get(d, "tags")
+	if err != nil || elemType == jsonparser.NotExist {
+		return nil, err
+	}
+	fields, elemType, _, err := jsonparser.Get(d, "fields")
+	if err != nil || elemType == jsonparser.NotExist {
+		return nil, err
+	}
 
 	return &metric{
 		ts:       timestamp,
-		name:     orgData.Name,
-		jsonData: fastMarshal(timestamp, orgData.Name, orgData.Tags, orgData.Fields),
+		name:     name,
+		jsonData: fastMarshal(timestamp, name, tags, fields),
 	}, nil
 }
 
@@ -72,7 +80,7 @@ var bufPool = sync.Pool{
 
 // json.Marshal consumes too much heap space and it makes GC busy.
 // fastMarshal does ALMOST SAME JOB with much more effecient way (but could be less safe).
-func fastMarshal(ts time.Time, name string, tags json.RawMessage, fields json.RawMessage) string {
+func fastMarshal(ts time.Time, name string, tags []byte, fields []byte) string {
 	b := bufPool.Get().(*bytes.Buffer)
 	b.Reset()
 
