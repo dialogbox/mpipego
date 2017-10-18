@@ -33,3 +33,21 @@ func FastMarshal(buf *bytes.Buffer, ts time.Time, name string, tags []byte, fiel
 	buf.Write(fields)
 	buf.WriteString(`}}`)
 }
+
+// ByteBufferWriteAll write all parameters to buf
+func ByteBufferWriteAll(buf *bytes.Buffer, data ...interface{}) {
+	for i := range data {
+		switch d := data[i].(type) {
+		case rune:
+			buf.WriteByte(byte(d))
+		case byte:
+			buf.WriteByte(d)
+		case []byte:
+			buf.Write(d)
+		case string:
+			buf.WriteString(d)
+		default:
+			fmt.Printf("unexpected type %T : %v\n", d, d)
+		}
+	}
+}

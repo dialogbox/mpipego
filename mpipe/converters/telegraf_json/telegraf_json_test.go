@@ -10,7 +10,7 @@ var data = []string{
 	`{"fields":{"avg_ttl":0,"expires":0,"keys":20398223},"name":"redis_keyspace","tags":{"database":"db0","host":"Ameba01gm","port":"8001","replication_role":"master","server":"localhost"},"timestamp":1492650430}`,
 	`{"fields":{"avg_ttl":1127630700,"expires":11,"keys":3170},"name":"redis_keyspace","tags":{"database":"db0","host":"Ameba01gm","port":"7000","replication_role":"slave","server":"localhost"},"timestamp":1492650430}`,
 	`{"fields":{"avg_ttl":712715018,"expires":10,"keys":3102},"name":"redis_keyspace","tags":{"database":"db0","host":"Ameba01gm","port":"7001","replication_role":"master","server":"localhost"},"timestamp":1492650430}`,
-	`{"fields":{"avg_ttl":372942585,"expires":26,"keys":29},"name":"redis_keyspace","tags":{"database":"db0","host":"Ameba01gm","port":"6382","replication_role":"master","server":"localhost"},"timestamp":1492650430}`,
+	`{"fields":{"avg_ttl":372942585,"expires":26,"keys":29},"name":"redis_keyspace","tags":{"database":"db0","host":"corp\\Ameba01gm","port":"6382","replication_role":"master","server":"localhost"},"timestamp":1492650430}`,
 }
 
 var expectedResult = []string{
@@ -19,7 +19,7 @@ var expectedResult = []string{
 	`{"@timestamp":"2017-04-20T10:07:10+09:00","name":"redis_keyspace","t":{"database":"db0","host":"Ameba01gm","port":"8001","replication_role":"master","server":"localhost"},"m":{"redis_keyspace":{"avg_ttl":0,"expires":0,"keys":20398223}}}`,
 	`{"@timestamp":"2017-04-20T10:07:10+09:00","name":"redis_keyspace","t":{"database":"db0","host":"Ameba01gm","port":"7000","replication_role":"slave","server":"localhost"},"m":{"redis_keyspace":{"avg_ttl":1127630700,"expires":11,"keys":3170}}}`,
 	`{"@timestamp":"2017-04-20T10:07:10+09:00","name":"redis_keyspace","t":{"database":"db0","host":"Ameba01gm","port":"7001","replication_role":"master","server":"localhost"},"m":{"redis_keyspace":{"avg_ttl":712715018,"expires":10,"keys":3102}}}`,
-	`{"@timestamp":"2017-04-20T10:07:10+09:00","name":"redis_keyspace","t":{"database":"db0","host":"Ameba01gm","port":"6382","replication_role":"master","server":"localhost"},"m":{"redis_keyspace":{"avg_ttl":372942585,"expires":26,"keys":29}}}`,
+	`{"@timestamp":"2017-04-20T10:07:10+09:00","name":"redis_keyspace","t":{"database":"db0","host":"corp\\Ameba01gm","port":"6382","replication_role":"master","server":"localhost"},"m":{"redis_keyspace":{"avg_ttl":372942585,"expires":26,"keys":29}}}`,
 }
 
 func TestTelegrafJSONConverter(t *testing.T) {

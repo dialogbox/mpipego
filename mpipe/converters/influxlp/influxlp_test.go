@@ -1,6 +1,7 @@
 package influxlp
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ var data = []string{
 	`temperature,machine=unit42,type=assembly internal=32,external=100 1508140809000000000`,
 	`temperature,machine=unit143,type=assembly internal=22,external=130 1508140809000000000`,
 	`mem,host=LM-SEL-00650622 inactive=5493116928i,used_percent=58.50780010223389,total=17179869184i,available=7128305664i,free=1635188736i,buffered=0i,used=10051563520i,cached=0i,active=6800138240i,available_percent=41.49219989776611 1508140809000000000`,
-	`cpu,cpu=cpu0,host=LM-SEL-00650622 usage_idle=83,usage_nice=0,usage_irq=0,usage_softirq=0,usage_user=5,usage_system=12,usage_iowait=0,usage_steal=0,usage_guest=0,usage_guest_nice=0 1508140809000000000`,
+	`cpu,cpu=cpu0,host=corp\\LM-SEL-00650622 usage_idle=83,usage_nice=0,usage_irq=0,usage_softirq=0,usage_user=5,usage_system=12,usage_iowait=0,usage_steal=0,usage_guest=0,usage_guest_nice=0 1508140809000000000`,
 	`cpu,cpu=cpu1,host=LM-SEL-00650622 usage_guest=0,usage_guest_nice=0,usage_user=1.0101010101010102,usage_idle=94.94949494949495,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_system=4.040404040404041,usage_nice=0,usage_steal=0 1508140809000000000`,
 	`cpu,cpu=cpu2,host=LM-SEL-00650622 usage_user=4.9504950495049505,usage_nice=0,usage_iowait=0,usage_guest=0,usage_guest_nice=0,usage_system=6.930693069306931,usage_idle=88.11881188118812,usage_irq=0,usage_softirq=0,usage_steal=0 1508140809000000000`,
 	`cpu,cpu=cpu3,host=LM-SEL-00650622 usage_idle=94.05940594059406,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_steal=0,usage_guest=0,usage_guest_nice=0,usage_user=2.9702970297029703,usage_nice=0,usage_system=2.9702970297029703 1508140809000000000`,
@@ -48,7 +49,7 @@ var data = []string{
 	`processes,host=LM-SEL-00650622 blocked=1i,zombies=0i,stopped=0i,running=3i,sleeping=337i,total=341i,unknown=0i,idle=0i 1508140809000000000`,
 	`netstat,host=LM-SEL-00650622 tcp_syn_sent=0i,tcp_none=0i,tcp_time_wait=0i,tcp_fin_wait1=0i,tcp_fin_wait2=0i,tcp_close_wait=0i,tcp_last_ack=0i,tcp_listen=2i,udp_socket=3i,tcp_established=17i,tcp_syn_recv=0i,tcp_close=0i,tcp_closing=0i 1508140809000000000`,
 	`system,host=LM-SEL-00650622 n_users=1i,n_cpus=4i,load1=2.54,load5=1.91,load15=1.7 1508140809000000000`,
-	`system,host=LM-SEL-00650622 uptime=280557i,uptime_format="3 days,  5:55" 1508140809000000000`,
+	`system,host=LM-SEL-00650622 uptime=280557i,uptime_format="3 days, \"h\" 5:55" 1508140809000000000`,
 }
 
 var expectedResult = []string{
@@ -59,7 +60,7 @@ var expectedResult = []string{
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"temperature","t":{"machine":"unit42","type":"assembly"},"m":{"temperature":{"internal":32,"external":100}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"temperature","t":{"machine":"unit143","type":"assembly"},"m":{"temperature":{"internal":22,"external":130}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"mem","t":{"host":"LM-SEL-00650622"},"m":{"mem":{"inactive":5493116928,"used_percent":58.50780010223389,"total":17179869184,"available":7128305664,"free":1635188736,"buffered":0,"used":10051563520,"cached":0,"active":6800138240,"available_percent":41.49219989776611}}}`,
-	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu0","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_idle":83,"usage_nice":0,"usage_irq":0,"usage_softirq":0,"usage_user":5,"usage_system":12,"usage_iowait":0,"usage_steal":0,"usage_guest":0,"usage_guest_nice":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu0","host":"corp\\LM-SEL-00650622"},"m":{"cpu":{"usage_idle":83,"usage_nice":0,"usage_irq":0,"usage_softirq":0,"usage_user":5,"usage_system":12,"usage_iowait":0,"usage_steal":0,"usage_guest":0,"usage_guest_nice":0}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu1","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_guest":0,"usage_guest_nice":0,"usage_user":1.0101010101010102,"usage_idle":94.94949494949495,"usage_iowait":0,"usage_irq":0,"usage_softirq":0,"usage_system":4.040404040404041,"usage_nice":0,"usage_steal":0}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu2","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_user":4.9504950495049505,"usage_nice":0,"usage_iowait":0,"usage_guest":0,"usage_guest_nice":0,"usage_system":6.930693069306931,"usage_idle":88.11881188118812,"usage_irq":0,"usage_softirq":0,"usage_steal":0}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu3","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_idle":94.05940594059406,"usage_iowait":0,"usage_irq":0,"usage_softirq":0,"usage_steal":0,"usage_guest":0,"usage_guest_nice":0,"usage_user":2.9702970297029703,"usage_nice":0,"usage_system":2.9702970297029703}}}`,
@@ -95,7 +96,54 @@ var expectedResult = []string{
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"processes","t":{"host":"LM-SEL-00650622"},"m":{"processes":{"blocked":1,"zombies":0,"stopped":0,"running":3,"sleeping":337,"total":341,"unknown":0,"idle":0}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"netstat","t":{"host":"LM-SEL-00650622"},"m":{"netstat":{"tcp_syn_sent":0,"tcp_none":0,"tcp_time_wait":0,"tcp_fin_wait1":0,"tcp_fin_wait2":0,"tcp_close_wait":0,"tcp_last_ack":0,"tcp_listen":2,"udp_socket":3,"tcp_established":17,"tcp_syn_recv":0,"tcp_close":0,"tcp_closing":0}}}`,
 	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"system","t":{"host":"LM-SEL-00650622"},"m":{"system":{"n_users":1,"n_cpus":4,"load1":2.54,"load5":1.91,"load15":1.7}}}`,
-	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"system","t":{"host":"LM-SEL-00650622"},"m":{"system":{"uptime":280557,"uptime_format":"3 days,  5:55"}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"system","t":{"host":"LM-SEL-00650622"},"m":{"system":{"uptime":280557,"uptime_format":"3 days, \"h\" 5:55"}}}`,
+}
+
+var expectedResult2 = []string{
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"host":"server 01","region":"uswest"},"m":{"cpu":{"msg":"all systems, abc nominal","value":1}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"host":"server 01","region":"us,west"},"m":{"cpu":{"value_int":1}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"host":"server01","region":"uswest"},"m":{"cpu":{"value":1}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"host":"server02","region":"uswest"},"m":{"cpu":{"value":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"temperature","t":{"machine":"unit42","type":"assembly"},"m":{"temperature":{"external":100,"internal":32}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"temperature","t":{"machine":"unit143","type":"assembly"},"m":{"temperature":{"external":130,"internal":22}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"mem","t":{"host":"LM-SEL-00650622"},"m":{"mem":{"active":6800138240,"available":7128305664,"available_percent":41.49219989776611,"buffered":0,"cached":0,"free":1635188736,"inactive":5493116928,"total":17179869184,"used":10051563520,"used_percent":58.50780010223389}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu0","host":"corp\\LM-SEL-00650622"},"m":{"cpu":{"usage_guest":0,"usage_guest_nice":0,"usage_idle":83,"usage_iowait":0,"usage_irq":0,"usage_nice":0,"usage_softirq":0,"usage_steal":0,"usage_system":12,"usage_user":5}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu1","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_guest":0,"usage_guest_nice":0,"usage_idle":94.94949494949495,"usage_iowait":0,"usage_irq":0,"usage_nice":0,"usage_softirq":0,"usage_steal":0,"usage_system":4.040404040404041,"usage_user":1.0101010101010102}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu2","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_guest":0,"usage_guest_nice":0,"usage_idle":88.11881188118812,"usage_iowait":0,"usage_irq":0,"usage_nice":0,"usage_softirq":0,"usage_steal":0,"usage_system":6.930693069306931,"usage_user":4.9504950495049505}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu3","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_guest":0,"usage_guest_nice":0,"usage_idle":94.05940594059406,"usage_iowait":0,"usage_irq":0,"usage_nice":0,"usage_softirq":0,"usage_steal":0,"usage_system":2.9702970297029703,"usage_user":2.9702970297029703}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"cpu","t":{"cpu":"cpu-total","host":"LM-SEL-00650622"},"m":{"cpu":{"usage_guest":0,"usage_guest_nice":0,"usage_idle":90.02493765586036,"usage_iowait":0,"usage_irq":0,"usage_nice":0,"usage_softirq":0,"usage_steal":0,"usage_system":6.483790523690773,"usage_user":3.491271820448878}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"diskio","t":{"host":"LM-SEL-00650622","name":"disk0"},"m":{"diskio":{"io_time":3407518,"iops_in_progress":0,"read_bytes":64059693056,"read_time":1545954,"reads":2574625,"weighted_io_time":0,"write_bytes":70562168832,"write_time":1861564,"writes":1673519}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"disk","t":{"device":"disk1","fstype":"hfs","host":"LM-SEL-00650622","path":"/"},"m":{"disk":{"free":118723137536,"inodes_free":4292144070,"inodes_total":4294967279,"inodes_used":2823209,"total":249678528512,"used":130693246976,"used_percent":52.39962371826942}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_memstats","t":{"host":"LM-SEL-00650622"},"m":{"internal_memstats":{"alloc_bytes":6063792,"frees":15414,"heap_alloc_bytes":6063792,"heap_idle_bytes":1040384,"heap_in_use_bytes":7643136,"heap_objects":22589,"heap_released_bytes":0,"heap_sys_bytes":8683520,"mallocs":38003,"num_gc":2,"pointer_lookups":245,"sys_bytes":12757240,"total_alloc_bytes":7547472}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"net"},"m":{"internal_gather":{"gather_time_ns":16403323,"metrics_gathered":20}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"cpu"},"m":{"internal_gather":{"gather_time_ns":2685002,"metrics_gathered":10}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"system"},"m":{"internal_gather":{"gather_time_ns":59415103,"metrics_gathered":4}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"netstat"},"m":{"internal_gather":{"gather_time_ns":42913420,"metrics_gathered":2}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_write","t":{"host":"LM-SEL-00650622","output":"file"},"m":{"internal_write":{"buffer_limit":10000,"buffer_size":71,"metrics_filtered":0,"metrics_written":71,"write_time_ns":738236}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"disk"},"m":{"internal_gather":{"gather_time_ns":2982343,"metrics_gathered":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"swap"},"m":{"internal_gather":{"gather_time_ns":19893457,"metrics_gathered":4}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"diskio"},"m":{"internal_gather":{"gather_time_ns":5997383,"metrics_gathered":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"internal"},"m":{"internal_gather":{"gather_time_ns":4060442,"metrics_gathered":31}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"elasticsearch"},"m":{"internal_gather":{"gather_time_ns":3608560,"metrics_gathered":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"kernel"},"m":{"internal_gather":{"gather_time_ns":10950,"metrics_gathered":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"mem"},"m":{"internal_gather":{"gather_time_ns":325953,"metrics_gathered":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_gather","t":{"host":"LM-SEL-00650622","input":"processes"},"m":{"internal_gather":{"gather_time_ns":26821893,"metrics_gathered":2}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"internal_agent","t":{"host":"LM-SEL-00650622"},"m":{"internal_agent":{"gather_errors":2,"metrics_dropped":0,"metrics_gathered":82,"metrics_written":78}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"en0"},"m":{"net":{"bytes_recv":818320774,"bytes_sent":355017658,"drop_in":0,"drop_out":51,"err_in":0,"err_out":0,"packets_recv":770229,"packets_sent":571649}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"swap","t":{"host":"LM-SEL-00650622"},"m":{"swap":{"free":965476352,"total":1073741824,"used":108265472,"used_percent":10.0830078125}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"swap","t":{"host":"LM-SEL-00650622"},"m":{"swap":{"in":0,"out":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"en1"},"m":{"net":{"bytes_recv":0,"bytes_sent":0,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":0,"packets_sent":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"en2"},"m":{"net":{"bytes_recv":0,"bytes_sent":0,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":0,"packets_sent":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"p2p0"},"m":{"net":{"bytes_recv":0,"bytes_sent":0,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":0,"packets_sent":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"awdl0"},"m":{"net":{"bytes_recv":149375,"bytes_sent":186840,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":682,"packets_sent":718}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"utun0"},"m":{"net":{"bytes_recv":0,"bytes_sent":268,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":0,"packets_sent":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"utun1"},"m":{"net":{"bytes_recv":0,"bytes_sent":268,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":0,"packets_sent":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"utun2"},"m":{"net":{"bytes_recv":2634,"bytes_sent":11085,"drop_in":0,"drop_out":0,"err_in":0,"err_out":0,"packets_recv":18,"packets_sent":40}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"net","t":{"host":"LM-SEL-00650622","interface":"en4"},"m":{"net":{"bytes_recv":88642815,"bytes_sent":18820283,"drop_in":0,"drop_out":0,"err_in":0,"err_out":198,"packets_recv":311566,"packets_sent":108502}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"processes","t":{"host":"LM-SEL-00650622"},"m":{"processes":{"blocked":1,"idle":0,"running":3,"sleeping":337,"stopped":0,"total":341,"unknown":0,"zombies":0}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"netstat","t":{"host":"LM-SEL-00650622"},"m":{"netstat":{"tcp_close":0,"tcp_close_wait":0,"tcp_closing":0,"tcp_established":17,"tcp_fin_wait1":0,"tcp_fin_wait2":0,"tcp_last_ack":0,"tcp_listen":2,"tcp_none":0,"tcp_syn_recv":0,"tcp_syn_sent":0,"tcp_time_wait":0,"udp_socket":3}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"system","t":{"host":"LM-SEL-00650622"},"m":{"system":{"load1":2.54,"load15":1.7,"load5":1.91,"n_cpus":4,"n_users":1}}}`,
+	`{"@timestamp":"2017-10-16T17:00:09+09:00","name":"system","t":{"host":"LM-SEL-00650622"},"m":{"system":{"uptime":280557,"uptime_format":"3 days, \"h\" 5:55"}}}`,
 }
 
 func TestInfluxLPConverter(t *testing.T) {
@@ -108,9 +156,84 @@ func TestInfluxLPConverter(t *testing.T) {
 		}
 
 		jsonData := r.JSON()
+		if jsonData != expectedResult2[i] {
+			t.Errorf("\nExpected: %s\nGot     : %s", expectedResult[i], jsonData)
+		}
+	}
+}
 
-		if jsonData != expectedResult[i] {
-			t.Errorf("Expected:\n%s\nGot:\n%s", expectedResult[i], jsonData)
+var tagsData = []string{
+	`host=server\ 01,region=uswest`,
+	`host=server\ 01,region=us\,west`,
+	`host=server01,region=uswest`,
+	`host=server02,region=uswest`,
+	`machine=unit42,type=assembly`,
+	`machine=unit143,type=assembly`,
+	`host=LM-SEL-00650622`,
+	`cpu=cpu0,host=corp\\LM-SEL-00650622`,
+	`path=/,device=disk1,fstype=hfs,host=LM-SEL-00650622`,
+	`host=LM-SEL-00650622,input=net`,
+}
+
+var fieldsData = []string{
+	`usage_guest=0,usage_guest_nice=0,usage_user=1.0101010101010102,usage_idle=94.94949494949495,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_system=4.040404040404041,usage_nice=0,usage_steal=0`,
+	`usage_user=4.9504950495049505,usage_nice=0,usage_iowait=0,usage_guest=0,usage_guest_nice=0,usage_system=6.930693069306931,usage_idle=88.11881188118812,usage_irq=0,usage_softirq=0,usage_steal=0`,
+	`usage_idle=94.05940594059406,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_steal=0,usage_guest=0,usage_guest_nice=0,usage_user=2.9702970297029703,usage_nice=0,usage_system=2.9702970297029703`,
+	`usage_idle=90.02493765586036,usage_iowait=0,usage_irq=0,usage_softirq=0,usage_user=3.491271820448878,usage_system=6.483790523690773,usage_nice=0,usage_steal=0,usage_guest=0,usage_guest_nice=0`,
+	`read_bytes=64059693056i,read_time=1545954i,io_time=3407518i,iops_in_progress=0i,writes=1673519i,write_bytes=70562168832i,write_time=1861564i,weighted_io_time=0i,reads=2574625i`,
+	`used=130693246976i,used_percent=52.39962371826942,inodes_total=4294967279i,inodes_free=4292144070i,inodes_used=2823209i,total=249678528512i,free=118723137536i`,
+	`alloc_bytes=6063792i,pointer_lookups=245i,heap_alloc_bytes=6063792i,heap_in_use_bytes=7643136i,heap_objects=22589i,total_alloc_bytes=7547472i,frees=15414i,num_gc=2i,sys_bytes=12757240i,heap_idle_bytes=1040384i,heap_released_bytes=0i,mallocs=38003i,heap_sys_bytes=8683520i`,
+	`metrics_gathered=20i,gather_time_ns=16403323i`,
+	`drop_in=0i,bytes_sent=0i,err_in=0i,packets_recv=0i,err_out=0i,drop_out=0i,bytes_recv=0i,packets_sent=0i`,
+	`bytes_sent=0i,bytes_recv=0i,packets_sent=0i,packets_recv=0i,err_in=0i,err_out=0i,drop_in=0i,drop_out=0i`,
+	`packets_sent=0i,bytes_recv=0i,packets_recv=0i,err_in=0i,err_out=0i,drop_in=0i,drop_out=0i,bytes_sent=0i`,
+	`packets_recv=682i,err_in=0i,drop_in=0i,bytes_recv=149375i,packets_sent=718i,drop_out=0i,bytes_sent=186840i,err_out=0i`,
+	`packets_recv=0i,bytes_recv=0i,packets_sent=3i,err_in=0i,err_out=0i,drop_in=0i,drop_out=0i,bytes_sent=268i`,
+	`drop_in=0i,drop_out=0i,bytes_sent=268i,bytes_recv=0i,packets_sent=3i,err_in=0i,packets_recv=0i,err_out=0i`,
+	`bytes_sent=11085i,packets_sent=40i,err_in=0i,drop_out=0i,bytes_recv=2634i,packets_recv=18i,err_out=0i,drop_in=0i`,
+	`drop_out=0i,bytes_sent=18820283i,bytes_recv=88642815i,err_in=0i,err_out=198i,packets_sent=108502i,packets_recv=311566i,drop_in=0i`,
+	`blocked=1i,zombies=0i,stopped=0i,running=3i,sleeping=337i,total=341i,unknown=0i,idle=0i`,
+	`tcp_syn_sent=0i,tcp_none=0i,tcp_time_wait=0i,tcp_fin_wait1=0i,tcp_fin_wait2=0i,tcp_close_wait=0i,tcp_last_ack=0i,tcp_listen=2i,udp_socket=3i,tcp_established=17i,tcp_syn_recv=0i,tcp_close=0i,tcp_closing=0i`,
+	`n_users=1i,n_cpus=4i,load1=2.54,load5=1.91,load15=1.7`,
+	`uptime=280557i,uptime_format="3 days, \"h\" 5:55"`,
+}
+
+func TestTagsScanner(t *testing.T) {
+	for i := range tagsData {
+		d := []byte(tagsData[i])
+
+		for {
+			advance, k, v, err := influxLPReadTag(d)
+			if err != nil {
+				t.Error(err)
+			}
+			fmt.Println(string(k), string(v))
+
+			if advance == 0 || advance >= len(d) {
+				break
+			}
+
+			d = d[advance:]
+		}
+	}
+}
+
+func TestFieldsScanner(t *testing.T) {
+	for i := range fieldsData {
+		d := []byte(fieldsData[i])
+
+		for {
+			advance, k, v, err := influxLPReadField(d)
+			if err != nil {
+				t.Error(err)
+			}
+			fmt.Println(string(k), v)
+
+			if advance == 0 || advance >= len(d) {
+				break
+			}
+
+			d = d[advance:]
 		}
 	}
 }
@@ -129,7 +252,7 @@ func BenchmarkInfluxLPConverter(b *testing.B) {
 
 			jsondata := m.JSON()
 			if jsondata != expectedResult[i] {
-				b.Logf("Expected:\n%s\nGot:\n%s", expectedResult[i], jsondata)
+				b.Logf("Expected: %s\nGot     : %s", expectedResult[i], jsondata)
 			}
 		}
 	}
