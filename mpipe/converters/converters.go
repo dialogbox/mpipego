@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dialogbox/mpipego/mpipe/converters/influxlp"
+	"github.com/dialogbox/mpipego/mpipe/converters/protobuf"
 
 	"github.com/dialogbox/mpipego/common"
 	"github.com/dialogbox/mpipego/mpipe/converters/telegraf_json"
@@ -16,6 +17,8 @@ func New(name string) (common.Converter, error) {
 		return telegraf_json.NewConverter(), nil
 	case "influxlp":
 		return influxlp.NewConverter(), nil
+	case "protobuf":
+		return protobuf.NewConverter(), nil
 	default:
 		return nil, fmt.Errorf("No such converter: %v", name)
 	}
