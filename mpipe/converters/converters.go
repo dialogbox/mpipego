@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dialogbox/mpipego/mpipe/converters/influxlp"
+	"github.com/dialogbox/mpipego/mpipe/converters/msgpack"
 	"github.com/dialogbox/mpipego/mpipe/converters/protobuf"
 
 	"github.com/dialogbox/mpipego/common"
@@ -19,6 +20,8 @@ func New(name string) (common.Converter, error) {
 		return influxlp.NewConverter(), nil
 	case "protobuf":
 		return protobuf.NewConverter(), nil
+	case "msgpack":
+		return msgpack.NewConverter(), nil
 	default:
 		return nil, fmt.Errorf("No such converter: %v", name)
 	}
