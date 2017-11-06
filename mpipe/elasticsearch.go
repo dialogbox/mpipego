@@ -6,15 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dialogbox/mpipego/common"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v5"
 )
-
-type indexable interface {
-	Timestamp() time.Time
-	JSON() string
-}
 
 type esConfig struct {
 	url      string
@@ -37,7 +33,7 @@ type elasticIndexer struct {
 	esConfig
 
 	wg    sync.WaitGroup
-	input chan indexable
+	input chan *common.Metric
 }
 
 func (es *elasticIndexer) throttle() {
@@ -46,7 +42,7 @@ func (es *elasticIndexer) throttle() {
 	}
 }
 
-func (es *elasticIndexer) index(m indexable) {
+func (es *elasticIndexer) index(m *common.Metric) {
 	es.input <- m
 }
 
@@ -84,7 +80,7 @@ func (es *elasticIndexer) start(ctx context.Context) {
 		panic(err)
 	}
 
-	es.input = make(chan indexable, es.bufferSize)
+	es.input = make(chan *common.Metric, es.bufferSize)
 
 	es.wg.Add(2)
 
@@ -99,8 +95,8 @@ func (es *elasticIndexer) start(ctx context.Context) {
 				logrus.Infoln("ES indexer has terminated")
 				return
 			case m := <-es.input:
-				indexName := fmt.Sprintf("%s-%s", es.prefix, m.Timestamp().Format("2006.01.02"))
-				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.template).Doc(m.JSON())
+				indexName := fmt.Sprintf("%s-%s", es.prefix, m.Timestamp.Format("2006.01.02"))
+				r := elastic.NewBulkIndexRequest().Index(indexName).Type(es.template).Doc(m)
 				processor.Add(r)
 			}
 		}

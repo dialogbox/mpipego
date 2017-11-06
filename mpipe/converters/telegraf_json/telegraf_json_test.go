@@ -1,6 +1,7 @@
 package telegraf_json
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -32,8 +33,11 @@ func TestTelegrafJSONConverter(t *testing.T) {
 			continue
 		}
 
-		jsondata := m.JSON()
-		if jsondata != expectedResult[i] {
+		jsondata, err := json.Marshal(m)
+		if err != nil {
+			t.Error(err)
+		}
+		if string(jsondata) != expectedResult[i] {
 			t.Logf("Expected:\n%s\nGot:\n%s", expectedResult[i], jsondata)
 		}
 	}
@@ -51,8 +55,11 @@ func BenchmarkTelegrafJSONConverter(b *testing.B) {
 				continue
 			}
 
-			jsondata := m.JSON()
-			if jsondata != expectedResult[i] {
+			jsondata, err := json.Marshal(m)
+			if err != nil {
+				b.Error(err)
+			}
+			if string(jsondata) != expectedResult[i] {
 				b.Logf("Expected:\n%s\nGot:\n%s", expectedResult[i], jsondata)
 			}
 		}

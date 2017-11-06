@@ -16,7 +16,7 @@ func (conv) Name() string {
 	return "msgpack"
 }
 
-func (conv) Convert(d []byte) (common.Metric, error) {
+func (conv) Convert(d []byte) (*common.Metric, error) {
 	m := &Metric{}
 	left, err := m.UnmarshalMsg(d)
 
@@ -28,7 +28,12 @@ func (conv) Convert(d []byte) (common.Metric, error) {
 		return nil, fmt.Errorf("Trailing garbage data has been received")
 	}
 
-	return m, nil
+	return &common.Metric{
+		Name:      m.Name,
+		Timestamp: m.Time,
+		Tags:      m.Tags,
+		Fields:    m.Fields,
+	}, nil
 }
 
 func (conv) SetConfig(config map[string]interface{}) error {

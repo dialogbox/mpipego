@@ -1,6 +1,7 @@
 package influxlp
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -155,8 +156,11 @@ func TestInfluxLPConverter(t *testing.T) {
 			t.Error(err)
 		}
 
-		jsonData := r.JSON()
-		if jsonData != expectedResult2[i] {
+		jsonData, err := json.Marshal(r)
+		if err != nil {
+			t.Error(err)
+		}
+		if string(jsonData) != expectedResult2[i] {
 			t.Errorf("\nExpected: %s\nGot     : %s", expectedResult[i], jsonData)
 		}
 	}
@@ -250,8 +254,11 @@ func BenchmarkInfluxLPConverter(b *testing.B) {
 				continue
 			}
 
-			jsondata := m.JSON()
-			if jsondata != expectedResult[i] {
+			jsondata, err := json.Marshal(m)
+			if err != nil {
+				b.Error(err)
+			}
+			if string(jsondata) != expectedResult[i] {
 				b.Logf("Expected: %s\nGot     : %s", expectedResult[i], jsondata)
 			}
 		}

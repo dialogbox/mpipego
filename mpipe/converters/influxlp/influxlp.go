@@ -3,33 +3,12 @@ package influxlp
 // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_tutorial/
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/dialogbox/mpipego/common"
 )
-
-type metric struct {
-	ts       time.Time
-	name     string
-	jsonData string
-}
-
-func (m *metric) Timestamp() time.Time {
-	return m.ts
-}
-
-func (m *metric) Name() string {
-	return m.name
-}
-
-func (m *metric) JSON() string {
-	return m.jsonData
-}
 
 func NewConverter() common.Converter {
 	return &conv{}
@@ -41,7 +20,7 @@ func (conv) Name() string {
 	return "influxlp"
 }
 
-func (conv) Convert(d []byte) (common.Metric, error) {
+func (conv) Convert(d []byte) (*common.Metric, error) {
 	measureSlice, tagsSlice, fieldsSlice, timestampSlice := quickOverlook(d)
 	if measureSlice == nil {
 		return nil, fmt.Errorf("Influx LP parse error: invalid format [%s]", string(d))
@@ -102,23 +81,11 @@ func (conv) Convert(d []byte) (common.Metric, error) {
 		timestamp = time.Now()
 	}
 
-	tagsJSON, err := json.Marshal(tags)
-	if err != nil {
-		return nil, err
-	}
-	fieldsJSON, err := json.Marshal(fields)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(buf)
-	common.FastMarshal(buf, timestamp, name, tagsJSON, fieldsJSON)
-
-	return &metric{
-		ts:       timestamp,
-		name:     name,
-		jsonData: buf.String(),
+	return &common.Metric{
+		Name:      name,
+		Timestamp: timestamp,
+		Tags:      tags,
+		Fields:    fields,
 	}, nil
 }
 
@@ -325,10 +292,4 @@ func parseFieldValue(v []byte) (interface{}, error) {
 	}
 
 	return strconv.ParseFloat(string(v), 64)
-}
-
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
 }

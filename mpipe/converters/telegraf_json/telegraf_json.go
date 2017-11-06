@@ -1,32 +1,11 @@
 package telegraf_json
 
 import (
-	"bytes"
-	"sync"
+	"encoding/json"
 	"time"
-
-	"github.com/buger/jsonparser"
 
 	"github.com/dialogbox/mpipego/common"
 )
-
-type metric struct {
-	ts       time.Time
-	name     string
-	jsonData string
-}
-
-func (m *metric) Timestamp() time.Time {
-	return m.ts
-}
-
-func (m *metric) Name() string {
-	return m.name
-}
-
-func (m *metric) JSON() string {
-	return m.jsonData
-}
 
 func NewConverter() common.Converter {
 	return &conv{}
@@ -39,44 +18,26 @@ func (conv) Name() string {
 }
 
 // ConvertTelegrafJSON Convert telegram generated JSON
-func (conv) Convert(d []byte) (common.Metric, error) {
-	ts, err := jsonparser.GetInt(d, "timestamp")
+func (conv) Convert(d []byte) (*common.Metric, error) {
+	m := &struct {
+		Name      string
+		Timestamp int64
+		Tags      map[string]string
+		Fields    map[string]interface{}
+	}{}
+	err := json.Unmarshal(d, m)
 	if err != nil {
 		return nil, err
 	}
-	timestamp := time.Unix(ts, 0)
 
-	name, err := jsonparser.GetString(d, "name")
-	if err != nil {
-		return nil, err
-	}
-
-	tags, elemType, _, err := jsonparser.Get(d, "tags")
-	if err != nil || elemType == jsonparser.NotExist {
-		return nil, err
-	}
-	fields, elemType, _, err := jsonparser.Get(d, "fields")
-	if err != nil || elemType == jsonparser.NotExist {
-		return nil, err
-	}
-
-	buf := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(buf)
-	common.FastMarshal(buf, timestamp, name, tags, fields)
-
-	return &metric{
-		ts:       timestamp,
-		name:     name,
-		jsonData: buf.String(),
-	}, nil
+	return &common.Metric{
+		Name:      m.Name,
+		Timestamp: time.Unix(m.Timestamp, 0),
+		Tags:      m.Tags,
+		Fields:    m.Fields,
+	}, err
 }
 
 func (conv) SetConfig(config map[string]interface{}) error {
 	return nil
-}
-
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
 }

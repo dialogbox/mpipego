@@ -2,36 +2,43 @@ package common
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"time"
 )
 
 // Converter interface
 type Converter interface {
-	Convert([]byte) (Metric, error)
+	Convert([]byte) (*Metric, error)
 	Name() string
 }
 
-type Metric interface {
-	Timestamp() time.Time
-	Name() string
-	JSON() string
+type Metric struct {
+	Name      string
+	Timestamp time.Time
+	Tags      map[string]string
+	Fields    map[string]interface{}
 }
 
-// FastMarshal does ALMOST SAME JOB as json.Marshal using much more effecient way (but could be less safe).
-// json.Marshal consumes too much heap space and it makes GC busy.
-func FastMarshal(buf *bytes.Buffer, ts time.Time, name string, tags []byte, fields []byte) {
-	buf.Reset()
+func (m *Metric) MarshalJSON() ([]byte, error) {
+	nameJSON, err := json.Marshal(m.Name)
+	if err != nil {
+		return nil, err
+	}
+	tagsJSON, err := json.Marshal(m.Tags)
+	if err != nil {
+		return nil, err
+	}
+	fieldsJSON, err := json.Marshal(m.Fields)
+	if err != nil {
+		return nil, err
+	}
+	timeStr := m.Timestamp.Format(time.RFC3339)
 
-	buf.WriteString(fmt.Sprintf(`{"@timestamp":"%s","name":"%s"`,
-		ts.Format(time.RFC3339),
-		name,
-	))
-	buf.WriteString(`,"t":`)
-	buf.Write(tags)
-	buf.WriteString(fmt.Sprintf(`,"m":{"%s":`, name))
-	buf.Write(fields)
-	buf.WriteString(`}}`)
+	j := fmt.Sprintf(`{"@timestamp":"%s","name":%s,"t":%s,"m":{%s:%s}}`,
+		timeStr, nameJSON, tagsJSON, nameJSON, fieldsJSON)
+
+	return []byte(j), nil
 }
 
 // ByteBufferWriteAll write all parameters to buf
