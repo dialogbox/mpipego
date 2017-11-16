@@ -1,8 +1,9 @@
 package telegraf_json
 
 import (
-	"encoding/json"
 	"time"
+
+	"github.com/json-iterator/go"
 
 	"github.com/dialogbox/mpipego/common"
 )
@@ -19,6 +20,7 @@ func (conv) Name() string {
 
 // ConvertTelegrafJSON Convert telegram generated JSON
 func (conv) Convert(d []byte) (*common.Metric, error) {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	m := &struct {
 		Name      string
 		Timestamp int64

@@ -2,9 +2,12 @@ package common
 
 import (
 	"bytes"
-	"encoding/json"
+	"reflect"
+
 	"fmt"
 	"time"
+
+	"github.com/json-iterator/go"
 )
 
 // Converter interface
@@ -21,15 +24,15 @@ type Metric struct {
 }
 
 func (m *Metric) MarshalJSON() ([]byte, error) {
-	nameJSON, err := json.Marshal(m.Name)
+	nameJSON, err := jsoniter.Marshal(m.Name)
 	if err != nil {
 		return nil, err
 	}
-	tagsJSON, err := json.Marshal(m.Tags)
+	tagsJSON, err := jsoniter.Marshal(m.Tags)
 	if err != nil {
 		return nil, err
 	}
-	fieldsJSON, err := json.Marshal(m.Fields)
+	fieldsJSON, err := jsoniter.Marshal(m.Fields)
 	if err != nil {
 		return nil, err
 	}
@@ -39,6 +42,34 @@ func (m *Metric) MarshalJSON() ([]byte, error) {
 		timeStr, nameJSON, tagsJSON, nameJSON, fieldsJSON)
 
 	return []byte(j), nil
+}
+
+// Identical deeply compares two metric
+// It used by test.
+func (m *Metric) Identical(m2 *Metric) bool {
+	if m2 == nil {
+		return false
+	}
+
+	if m.Name != m2.Name || m.Timestamp != m2.Timestamp {
+		return false
+	}
+
+	if !reflect.DeepEqual(m.Tags, m2.Tags) {
+		return false
+	}
+
+	if len(m.Fields) != len(m2.Fields) {
+		return false
+	}
+
+	for k, v := range m.Fields {
+		if fmt.Sprint(v) != fmt.Sprint(m2.Fields[k]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ByteBufferWriteAll write all parameters to buf

@@ -1,9 +1,10 @@
 package influxlp
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/json-iterator/go"
 )
 
 var data = []string{
@@ -156,7 +157,7 @@ func TestInfluxLPConverter(t *testing.T) {
 			t.Error(err)
 		}
 
-		jsonData, err := json.Marshal(r)
+		jsonData, err := jsoniter.Marshal(r)
 		if err != nil {
 			t.Error(err)
 		}
@@ -254,7 +255,7 @@ func BenchmarkInfluxLPConverter(b *testing.B) {
 				continue
 			}
 
-			jsondata, err := json.Marshal(m)
+			jsondata, err := jsoniter.Marshal(m)
 			if err != nil {
 				b.Error(err)
 			}

@@ -1,12 +1,12 @@
 package mpipe
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/dialogbox/mpipego/common"
+	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v5"
@@ -153,7 +153,7 @@ func bulkAfterCallback(executionID int64, requests []elastic.BulkableRequest, re
 	if response.Errors {
 		failedItems := response.Failed()
 		for i := range failedItems {
-			logrus.Error(json.Marshal(failedItems[i]))
+			logrus.Error(jsoniter.Marshal(failedItems[i]))
 		}
 	}
 }
