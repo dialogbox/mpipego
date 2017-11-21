@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dialogbox/mpipego/common"
+	"github.com/pkg/errors"
 )
 
 func NewConverter() common.Converter {
@@ -38,4 +39,20 @@ func (conv) Convert(d []byte) (*common.Metric, error) {
 
 func (conv) SetConfig(config map[string]interface{}) error {
 	return nil
+}
+
+func (conv) Encode(om *common.Metric) ([]byte, error) {
+	m := &Metric{
+		Name:   om.Name,
+		Time:   om.Timestamp,
+		Tags:   om.Tags,
+		Fields: om.Fields,
+	}
+
+	b, err := m.MarshalMsg(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "Can not marshal metric")
+	}
+
+	return b, nil
 }

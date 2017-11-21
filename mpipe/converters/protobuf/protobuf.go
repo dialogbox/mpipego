@@ -6,6 +6,7 @@ import (
 
 	"github.com/dialogbox/mpipego/common"
 	proto "github.com/golang/protobuf/proto"
+	"github.com/pkg/errors"
 )
 
 func NewConverter() common.Converter {
@@ -48,6 +49,27 @@ func (conv) SetConfig(config map[string]interface{}) error {
 	return nil
 }
 
+func (conv) Encode(om *common.Metric) ([]byte, error) {
+	f, err := convertFieldsRev(om.Fields)
+	if err != nil {
+		return nil, errors.Wrap(err, "Can not convert fields to protobuf")
+	}
+
+	m := &Metric{
+		Name:      om.Name,
+		Timestamp: om.Timestamp.UnixNano(),
+		Tags:      om.Tags,
+		Fields:    f,
+	}
+
+	b, err := proto.Marshal(m)
+	if err != nil {
+		return nil, errors.Wrap(err, "Can not marshal metric to protobuf")
+	}
+
+	return b, nil
+}
+
 func convertFields(m *Metric) (map[string]interface{}, error) {
 	f := make(map[string]interface{})
 
@@ -65,5 +87,28 @@ func convertFields(m *Metric) (map[string]interface{}, error) {
 			return nil, fmt.Errorf("Unsupported field data type: [%s, %v(%T)]", k, v, v)
 		}
 	}
+	return f, nil
+}
+
+func convertFieldsRev(of map[string]interface{}) (map[string]*FieldValue, error) {
+	f := make(map[string]*FieldValue)
+
+	for k, v := range of {
+		switch v := v.(type) {
+		case int64:
+			f[k] = &FieldValue{&FieldValue_IntValue{IntValue: v}}
+		case int:
+			f[k] = &FieldValue{&FieldValue_IntValue{IntValue: int64(v)}}
+		case float64:
+			f[k] = &FieldValue{&FieldValue_FloatValue{FloatValue: v}}
+		case string:
+			f[k] = &FieldValue{&FieldValue_StringValue{StringValue: v}}
+		case bool:
+			f[k] = &FieldValue{&FieldValue_BoolValue{BoolValue: v}}
+		default:
+			return nil, fmt.Errorf("Unsupported field data type: [%s, %v(%T)]", k, v, v)
+		}
+	}
+
 	return f, nil
 }
